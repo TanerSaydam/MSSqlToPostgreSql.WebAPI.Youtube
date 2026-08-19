@@ -2,7 +2,7 @@
 
 Youtube için hazırlanan videonun reposu
 
-### <a href="" target="_blank">Video için Tıkla</a>
+### <a href="https://youtu.be/UEIYsHPyviU" target="_blank">Video için Tıkla</a>
 
 ### Docker CLI
 ```dash
