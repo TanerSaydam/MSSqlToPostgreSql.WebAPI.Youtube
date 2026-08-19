@@ -8,7 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(opt =>
 {
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
+    //opt.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"));
+    opt.UseSnakeCaseNamingConvention();
 });
 builder.Services.AddOpenApi();
 
@@ -26,7 +28,7 @@ app.MapPost("/products", async (
     {
         Name = request.Name,
         Price = request.Price,
-        CreatedAt = DateTime.UtcNow
+        CreatedAt = DateTime.Now
     };
 
     dbContext.Add(product);
@@ -168,5 +170,50 @@ app.MapGet("/orders", async (
 
 //    return Results.NoContent();
 //});
+
+app.MapPost("/sync", async (
+    IConfiguration configuration,
+    CancellationToken cancellationToken) =>
+{
+    var sqlServerOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseSqlServer(configuration.GetConnectionString("SqlServer"))
+        .Options;
+
+    var postgresOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+        .UseNpgsql(configuration.GetConnectionString("Postgres"))
+        .UseSnakeCaseNamingConvention()
+        .Options;
+
+    await using var sqlDb = new ApplicationDbContext(sqlServerOptions);
+    await using var postgresDb = new ApplicationDbContext(postgresOptions);
+
+    // PostgreSQL doluysa tekrar ekleme
+    if (await postgresDb.Set<Product>().AnyAsync(cancellationToken))
+    {
+        return Results.BadRequest("PostgreSQL veritabanında zaten veri var.");
+    }
+
+    var products = await sqlDb
+        .Set<Product>()
+        .AsNoTracking()
+        .ToListAsync(cancellationToken);
+
+    var orders = await sqlDb
+        .Set<Order>()
+        .AsNoTracking()
+        .Include(x => x.Items)
+        .ToListAsync(cancellationToken);
+
+    postgresDb.AddRange(products);
+    postgresDb.AddRange(orders);
+
+    await postgresDb.SaveChangesAsync(cancellationToken);
+
+    return Results.Ok(new
+    {
+        ProductCount = products.Count,
+        OrderCount = orders.Count
+    });
+});
 
 app.Run();

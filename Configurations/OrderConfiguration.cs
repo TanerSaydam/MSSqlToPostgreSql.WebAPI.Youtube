@@ -8,9 +8,11 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.ToTable("Orders");
+        builder.ToTable("orders");
         builder.Property(p => p.OrderNumber).HasColumnType("varchar(16)");
         builder.HasIndex(x => x.OrderNumber).IsUnique();
         builder.OwnsMany(i => i.Items);
+        builder.Property(p => p.CreatedAt).HasColumnType("timestamp without time zone");
+        builder.Property(p => p.UpdatedAt).HasColumnType("timestamp without time zone");
     }
 }
