@@ -1,4 +1,4 @@
-## .NET EF Core ile MSSQL yapısını Postgres'e çevirme ve kayıtları aktarma
+## .NET EF Core ile MSSQL'i PostgreSQL'e çevirme ve kayıtları aktarma
 
 Youtube için hazırlanan videonun reposu
 
