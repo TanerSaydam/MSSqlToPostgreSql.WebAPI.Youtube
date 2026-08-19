@@ -3,4 +3,6 @@
 public sealed record ProductDto(
     Guid Id,
     string Name,
-    decimal Price);
+    decimal Price,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt);
